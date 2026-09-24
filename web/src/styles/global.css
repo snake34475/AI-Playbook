@@ -59,6 +59,9 @@ kbd { padding: .25rem .42rem; color: var(--muted); background: #edf0eb; border: 
 .tag-row { display: flex; flex-wrap: wrap; gap: .32rem; }
 .tag-row span, .tag-row a, .tag-link { color: #5b645b; background: #f0f2ee; border: 0; border-radius: .25rem; padding: .16rem .28rem; text-decoration: none; font: inherit; }
 .tag-link:hover, .detail-tags a:hover { background: var(--lime); color: var(--ink); }
+.card-copy { align-self: flex-start; margin-top: .9rem; padding: .38rem .62rem; color: var(--ink); background: var(--lime); border: 1px solid var(--ink); border-radius: .3rem; box-shadow: 2px 2px 0 var(--ink); font-size: .79rem; font-weight: 750; }
+.card-copy:hover { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
+.card-copy.copied { background: #d8f4f0; }
 mark { color: inherit; background: var(--lime); }
 .empty-state { padding: 3rem 0; color: var(--muted); text-align: center; }
 
