@@ -1,0 +1,21 @@
+{
+  "name": "ai-playbook",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "content:build": "tsx scripts/build-content.ts",
+    "dev": "npm run content:build && astro dev --root web",
+    "build": "npm run content:build && astro build --root web",
+    "preview": "astro preview --root web"
+  },
+  "dependencies": {
+    "astro": "^5.13.2",
+    "fuse.js": "^7.1.0",
+    "gray-matter": "^4.0.3",
+    "typescript": "^5.7.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
+  }
+}

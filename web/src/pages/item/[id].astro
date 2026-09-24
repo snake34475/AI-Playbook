@@ -1,0 +1,56 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { items, typeLabels } from '../../lib/content';
+
+export function getStaticPaths() {
+  return items.map((item) => ({ params: { id: item.id }, props: { item } }));
+}
+
+const { item } = Astro.props;
+const backHref = import.meta.env.BASE_URL;
+---
+
+<BaseLayout title={`${item.title} · AI Playbook`} description={item.description}>
+  <a class="back-link" href={backHref}>← 返回内容库</a>
+  <article class="detail">
+    <header class="detail-header">
+      <div class="card-topline">
+        <span class={`type-badge type-${item.type}`}>{typeLabels[item.type]}</span>
+        {item.verified && <span class="verified">已验证</span>}
+        {item.status === 'draft' && <span class="draft">草稿</span>}
+      </div>
+      <h1>{item.title}</h1>
+      <p class="lead">{item.description}</p>
+      <div class="detail-meta">
+        <span>{item.category}</span>
+        {item.models.map((model) => <span>{model}</span>)}
+        {item.updated && <span>更新于 {item.updated}</span>}
+      </div>
+      <div class="tag-row detail-tags">{item.tags.map((tag) => <a href={`${backHref}?q=${encodeURIComponent(tag)}`}>#{tag}</a>)}</div>
+    </header>
+
+    {item.useCases.length > 0 && <section class="detail-section"><h2>使用场景</h2><ul>{item.useCases.map((useCase) => <li>{useCase}</li>)}</ul></section>}
+    {item.sections.usage && <section class="detail-section"><h2>使用说明</h2><p class="preserve">{item.sections.usage}</p></section>}
+    {item.steps.length > 0 && <section class="detail-section"><h2>执行流程</h2><ol class="steps">{item.steps.map((step) => <li><strong>{step.title}</strong>{step.description && <span>{step.description}</span>}</li>)}</ol></section>}
+
+    {item.prompt && <section class="detail-section prompt-section"><div class="section-heading"><h2>Prompt</h2><button id="copy-prompt" type="button" data-prompt={item.prompt}>复制 Prompt</button></div><pre><code>{item.prompt}</code></pre></section>}
+
+    {(item.inputs.length > 0 || item.outputs.length > 0) && <section class="detail-section io-grid">
+      {item.inputs.length > 0 && <div><h2>输入</h2><ul>{item.inputs.map((input) => <li><strong>{input.name}</strong>{input.required && '（必填）'}{input.description && <span>：{input.description}</span>}</li>)}</ul></div>}
+      {item.outputs.length > 0 && <div><h2>输出</h2><ul>{item.outputs.map((output) => <li>{output}</li>)}</ul></div>}
+    </section>}
+    {item.sections.examples && <section class="detail-section"><h2>示例</h2><p class="preserve">{item.sections.examples}</p></section>}
+    {item.sections.notes && <section class="detail-section notes"><h2>我的实战备注</h2><p class="preserve">{item.sections.notes}</p></section>}
+  </article>
+</BaseLayout>
+
+<script>
+  const button = document.querySelector<HTMLButtonElement>('#copy-prompt');
+  button?.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(button.dataset.prompt || '');
+    const original = button.textContent;
+    button.textContent = '已复制 ✓';
+    button.classList.add('copied');
+    window.setTimeout(() => { button.textContent = original; button.classList.remove('copied'); }, 1800);
+  });
+</script>

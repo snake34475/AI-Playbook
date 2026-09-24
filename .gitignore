@@ -1,0 +1,7 @@
+node_modules/
+node_modules.install-interrupted/
+web/dist/
+web/.astro/
+*.log
+package-lock.install-interrupted.json
+.DS_Store

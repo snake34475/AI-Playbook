@@ -1,0 +1,108 @@
+---
+import type { LibraryItem } from '../lib/content';
+import { categories, typeLabels } from '../lib/content';
+
+interface Props { items: LibraryItem[] }
+const { items } = Astro.props;
+const payload = JSON.stringify(items).replace(/</g, '\\u003c');
+---
+
+<section class="search-panel" aria-label="搜索内容库">
+  <label class="search-box" for="library-search">
+    <span aria-hidden="true">⌕</span>
+    <input id="library-search" type="search" placeholder="搜索 Prompt、Skill、标签或场景…" autocomplete="off" />
+    <kbd>⌘ K</kbd>
+  </label>
+
+  <div class="filter-row" aria-label="分类筛选">
+    <button class="filter active" type="button" data-category="">全部</button>
+    {categories.map((category) => <button class="filter" type="button" data-category={category}>{category}</button>)}
+  </div>
+
+  <div class="result-meta">
+    <span id="result-count">{items.length} 条内容</span>
+    <select id="type-filter" aria-label="按内容类型筛选">
+      <option value="">所有类型</option>
+      {Object.entries(typeLabels).map(([value, label]) => <option value={value}>{label}</option>)}
+    </select>
+  </div>
+  <div id="results" class="result-list" aria-live="polite"></div>
+  <p id="empty-state" class="empty-state" hidden>没有找到匹配内容。试试更短的关键词或切换分类。</p>
+</section>
+
+<script type="application/json" id="search-index" set:html={payload}></script>
+<script>
+  import Fuse from 'fuse.js';
+
+  type Item = {
+    id: string; type: string; title: string; description: string; category: string;
+    tags: string[]; models: string[]; verified: boolean; searchText: string;
+  };
+  const base = import.meta.env.BASE_URL;
+  const items = JSON.parse(document.querySelector('#search-index')?.textContent || '[]') as Item[];
+  const fuse = new Fuse(items, {
+    includeMatches: true,
+    ignoreLocation: true,
+    threshold: 0.34,
+    keys: [
+      { name: 'title', weight: 0.35 }, { name: 'tags', weight: 0.25 },
+      { name: 'description', weight: 0.15 }, { name: 'category', weight: 0.1 },
+      { name: 'models', weight: 0.1 }, { name: 'searchText', weight: 0.05 }
+    ]
+  });
+  const input = document.querySelector<HTMLInputElement>('#library-search')!;
+  const results = document.querySelector<HTMLDivElement>('#results')!;
+  const count = document.querySelector<HTMLSpanElement>('#result-count')!;
+  const empty = document.querySelector<HTMLParagraphElement>('#empty-state')!;
+  const typeFilter = document.querySelector<HTMLSelectElement>('#type-filter')!;
+  const initialQuery = new URLSearchParams(window.location.search).get('q');
+  let category = '';
+
+  function emphasis(text: string, query: string) {
+    const fragment = document.createDocumentFragment();
+    if (!query) { fragment.append(text); return fragment; }
+    const lower = text.toLocaleLowerCase();
+    const index = lower.indexOf(query.toLocaleLowerCase());
+    if (index < 0) { fragment.append(text); return fragment; }
+    fragment.append(text.slice(0, index));
+    const mark = document.createElement('mark'); mark.textContent = text.slice(index, index + query.length);
+    fragment.append(mark, text.slice(index + query.length));
+    return fragment;
+  }
+
+  function renderCard(item: Item, query: string) {
+    const article = document.createElement('article'); article.className = 'item-card';
+    const top = document.createElement('div'); top.className = 'card-topline';
+    const badge = document.createElement('span'); badge.className = `type-badge type-${item.type}`; badge.textContent = item.type[0].toUpperCase() + item.type.slice(1);
+    top.append(badge);
+    if (item.verified) { const verified = document.createElement('span'); verified.className = 'verified'; verified.textContent = '已验证'; top.append(verified); }
+    const heading = document.createElement('h3'); const link = document.createElement('a'); link.href = `${base}item/${item.id}/`; link.append(emphasis(item.title, query)); heading.append(link);
+    const description = document.createElement('p'); description.append(emphasis(item.description, query));
+    const footer = document.createElement('div'); footer.className = 'card-footer';
+    const categoryLabel = document.createElement('span'); categoryLabel.textContent = item.category; footer.append(categoryLabel);
+    const tags = document.createElement('div'); tags.className = 'tag-row';
+    item.tags.slice(0, 3).forEach((tag) => { const chip = document.createElement('button'); chip.type = 'button'; chip.className = 'tag-link'; chip.textContent = `#${tag}`; chip.addEventListener('click', () => { input.value = tag; render(); input.focus(); }); tags.append(chip); });
+    footer.append(tags); article.append(top, heading, description, footer); return article;
+  }
+
+  function render() {
+    const query = input.value.trim();
+    let visible = query ? fuse.search(query).map((result) => result.item) : items;
+    if (category) visible = visible.filter((item) => item.category === category);
+    if (typeFilter.value) visible = visible.filter((item) => item.type === typeFilter.value);
+    results.replaceChildren(...visible.map((item) => renderCard(item, query)));
+    count.textContent = query ? `找到 ${visible.length} 条结果` : `${visible.length} 条内容`;
+    empty.hidden = visible.length !== 0;
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('[data-category]').forEach((button) => button.addEventListener('click', () => {
+    category = button.dataset.category || '';
+    document.querySelectorAll('[data-category]').forEach((item) => item.classList.toggle('active', item === button));
+    render();
+  }));
+  input.addEventListener('input', render);
+  typeFilter.addEventListener('change', render);
+  document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); input.focus(); } });
+  if (initialQuery) input.value = initialQuery;
+  render();
+</script>

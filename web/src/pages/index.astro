@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SearchPanel from '../components/SearchPanel.astro';
+import { items } from '../lib/content';
+---
+
+<BaseLayout>
+  <header class="site-header">
+    <a class="wordmark" href={import.meta.env.BASE_URL}>AI Playbook<span>.</span></a>
+    <p>个人验证过的 AI Prompt、Skill 与工作流。</p>
+  </header>
+
+  <section class="intro">
+    <p class="eyebrow">PERSONAL AI LIBRARY</p>
+    <h1>找到那个真正有用的 AI 方法。</h1>
+    <p>搜索场景、模型、标签或正文；复制后马上使用。</p>
+  </section>
+
+  <SearchPanel items={items} />
+</BaseLayout>

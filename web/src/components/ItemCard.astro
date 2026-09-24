@@ -1,0 +1,22 @@
+---
+import type { LibraryItem } from '../lib/content';
+import { typeLabels } from '../lib/content';
+
+interface Props { item: LibraryItem }
+const { item } = Astro.props;
+---
+
+<article class="item-card">
+  <div class="card-topline">
+    <span class={`type-badge type-${item.type}`}>{typeLabels[item.type]}</span>
+    {item.verified && <span class="verified">已验证</span>}
+  </div>
+  <h3><a href={`${import.meta.env.BASE_URL}item/${item.id}/`}>{item.title}</a></h3>
+  <p>{item.description}</p>
+  <div class="card-footer">
+    <span>{item.category}</span>
+    <div class="tag-row" aria-label="标签">
+      {item.tags.slice(0, 3).map((tag) => <span>#{tag}</span>)}
+    </div>
+  </div>
+</article>
